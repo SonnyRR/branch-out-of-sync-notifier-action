@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Notify PR owner if branch is out of sync
-        uses: SonnyRR/branch-out-of-sync-notifier-action@0.1.1
+        uses: SonnyRR/branch-out-of-sync-notifier-action@0.1.2
 ```
 
 ### 📩 Inputs

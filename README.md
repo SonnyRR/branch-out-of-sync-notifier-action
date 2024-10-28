@@ -5,6 +5,9 @@ A github action that notifies pull-request owners that their base branch is behi
 
 It utilizes tools such as `git` and [github-script](https://github.com/actions/github-script) to write workflows in `JavaScript`.
 
+![image](https://github.com/user-attachments/assets/b4e7b947-fef0-4250-853e-09c48afcb98e)
+
+
 ### 🔨 Setup
 Below is the bare minimum step in order to utilize this action, by default each of the inputs has a default value.
 ```yml

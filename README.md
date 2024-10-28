@@ -1,11 +1,11 @@
 # 📣 Branch out-of-sync notifier action 
 
-## 🖋 Description
+### 🖋 Description
 A github action that notifies pull-request owners that their base branch is behind the target branch via a comment on the pull request itself.
 
 It utilizes tools such as `git` and [github-script](https://github.com/actions/github-script) to write workflows in `JavaScript`.
 
-## 🔨 Setup
+### 🔨 Setup
 Below is the bare minimum step in order to utilize this action, by default each of the inputs has a default value.
 ```yml
 name: Check if base branch is synchronized
@@ -24,7 +24,7 @@ jobs:
         uses: SonnyRR/branch-out-of-sync-notifier-action@main
 ```
 
-## 📩 Inputs
+### 📩 Inputs
 ```yml
 base-ref:
   description: "The base git reference, used for comparison."

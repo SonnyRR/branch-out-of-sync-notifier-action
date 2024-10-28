@@ -1,0 +1,91 @@
+name: "Branch out-of-sync notifier"
+description: "Comments on an open PR if the base branch is out of sync with the target one."
+branding:
+  icon: git-branch
+  color: orange
+
+inputs:
+  base-ref:
+    description: "Message that should be printed in the pull request"
+    default: ${{ github.event.pull_request.base.ref }}
+    required: true
+  head-ref:
+    description: "Path of the file that should be commented"
+    default: ${{ github.event.pull_request.head.ref }}
+    required: true
+  request-owner:
+    description: "The owner of the pull request"
+    default: ${{ github.event.pull_request.user.login }}
+    required: true
+  request-number:
+    descripton: "The request number"
+    default: ${{ github.event.pull_request.number }}
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: true
+        clean: false
+
+    - name: Compare branches
+      id: "compare-branches"
+      shell: bash
+      run: |
+        git fetch --all
+        echo "behind=$(git rev-list --count origin/${{ inputs.head-ref }}..origin/${{ inputs.base-ref }})" >> $GITHUB_OUTPUT
+        echo "ahead=$(git rev-list --count origin/${{ inputs.base-ref }}..origin/${{ inputs.head-ref }})" >> $GITHUB_OUTPUT
+
+    - name: Remove existing comments
+      uses: actions/github-script@v7
+      env:
+        # Top level env. variables are not supported in composite actions :(
+        SYNC_BOT_TITLE: "Branch Sync Notifier"
+        BOT_LOGIN: "github-actions[bot]"
+      with:
+        script: |
+          const pullRequestComments = await github.paginate(github.rest.issues.listComments, {
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+          });
+
+          const botComments = pullRequestComments.filter(c => {
+              return c.user.login === '${{ env.BOT_LOGIN }}' && c.body.includes('${{ env.SYNC_BOT_TITLE }}');
+          });
+
+          botComments.forEach(async comment => {
+              await github.rest.issues.deleteComment({
+                comment_id: comment.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+          });
+
+    - name: Comment if head branch is out of sync
+      uses: actions/github-script@v7
+      if: steps.compare-branches.outputs.behind > 0
+      env:
+        SYNC_BOT_TITLE: "Branch Sync Notifier"
+      with:
+        script: |
+          const body = `# ${{ env.SYNC_BOT_TITLE }} :bell: 
+
+          ### Hey, @${{ inputs.request-owner }}! :wave:
+          ### Your branch is out of sync with the PR's target branch. 
+          ### Please rebase it on top of the latest changes from \`${{ github.event.pull_request.base.ref }}\` or merge them. :sun_with_face:
+
+          **Run: [${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) :rabbit2:** 
+          **Attempt: № \`${{ github.run_attempt }}\` :eyes:**
+          `;
+
+          github.rest.issues.createComment({
+            issue_number: ${{ inputs.request-number }},
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: body
+          })

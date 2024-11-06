@@ -45,4 +45,8 @@ request-number:
   descripton: "The pull request number"
   default: ${{ github.event.pull_request.number }}
   required: true
+no-sync-label:
+  description: "The label value, used for tagging PRs that shouldn't be checked"
+  default: 'no-branch-sync'
+  required: false
 ```
